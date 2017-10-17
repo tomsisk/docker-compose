@@ -1,0 +1,46 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    links:
+      - php-app
+    ports:
+      - 80:80
+    volumes:
+      - ./public:/var/www/html
+      - ./storage/logs/nginx:/var/log/nginx
+      - ./config/nginx:/etc/nginx/conf.d
+    restart: always
+
+  php-app:
+    build: .
+    links:
+      - postgres
+      - redis
+    volumes:
+      - ./public:/var/www/html
+      - ./storage/logs/php-app:/var/log/php-app
+      - ./config/php-app:/usr/local/etc/php/conf.d
+      - ./composer:/usr/local/bin/composer
+    restart: always
+    cap_add:
+      - ALL
+    cap_drop:
+      - NET_ADMIN
+      - SYS_ADMIN
+
+  postgres:
+    image: postgres:9.6
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - ./storage/services/postgres/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: superSecurePassword
+
+  redis:
+    image: redis:3.2
+    restart: always
+    ports:
+      - 6379:6379
